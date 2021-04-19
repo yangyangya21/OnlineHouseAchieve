@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yjq.programmer.dao.common.HouseDao">
+
+    <!-- 多表联合查询 -->
+    <resultMap type="com.yjq.programmer.pojo.common.House" id="allHouseMap">
+        <id column="h_id" property="id" />
+        <result column="h_cover_photo" property="coverPhoto" />
+        <result column="h_money" property="money" />
+        <result column="h_house_type" property="houseType" />
+        <result column="h_area" property="area" />
+        <result column="h_orientation" property="orientation" />
+        <result column="h_floor" property="floor" />
+        <result column="h_renovation" property="renovation" />
+        <result column="h_location" property="location" />
+        <result column="h_info" property="info" />
+        <result column="h_details" property="details" />
+        <result column="h_user_id" property="userId" />
+        <result column="h_create_time" property="createTime" />
+        <result column="h_update_time" property="updateTime" />
+        <result column="h_state" property="state" />
+        <result column="h_category" property="category" />
+        <!-- association中property使对应实体里封装的类型，javaType:指实体类型 --> <!-- 一对一关系 -->
+        <association property="user" javaType="com.yjq.programmer.pojo.common.User">
+            <id column="u_id" property="id" />
+            <result column="u_username" property="username" />
+        </association>
+    </resultMap>
+
+    <!-- 后台获取房屋信息列表 -->
+    <select id="getHouseList" parameterType="java.util.Map" resultMap="allHouseMap">
+        select h.id as h_id, h.cover_photo as h_cover_photo, h.money as h_money, h.house_type as h_house_type,
+        h.area as h_area, h.orientation as h_orientation, h.floor as h_floor, h.renovation as h_renovation,
+        h.location as h_location, h.info as h_info, h.details as h_details, h.user_id as h_user_id, h.create_time
+        as h_create_time, h.update_time as h_update_time, h.state as h_state, h.category as h_category, u.id as u_id,
+        u.username as u_username from house h left join user u on h.user_id = u.id
+        <where>
+            <if test="info != null and info != ''">
+                and h.info like concat('%',#{info},'%')
+            </if>
+            <if test="userId != null">
+                and h.user_id = #{userId}
+            </if>
+            <if test="state != null and state != -1">
+                and h.state = #{state}
+            </if>
+        </where>
+    </select>
+
+    <!-- 获取所有房屋的总数 -->
+    <select id="getAllTotal" parameterType="java.util.Map" resultType="Integer">
+        select count(*) from house h left join user u on h.user_id = u.id
+        <where>
+            <if test="info != null and info != ''">
+                and h.info like concat('%',#{info},'%')
+            </if>
+            <if test="userId != null">
+                and h.user_id = #{userId}
+            </if>
+            <if test="state != null and state != -1">
+                and h.state = #{state}
+            </if>
+        </where>
+    </select>
+
+    <!-- 通过用户id列表删除房屋信息数据 -->
+    <delete id="deleteByUserIdList" parameterType="java.util.List">
+        delete from house where user_id in (
+        <foreach collection="userIdList" index="index" item="item" separator=",">
+            #{item}
+        </foreach>
+        )
+    </delete>
+</mapper>

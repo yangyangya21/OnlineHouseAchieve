@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yjq.programmer.dao.common.OrderTimeDao">
+
+    <!-- 多表联合查询 -->
+    <resultMap type="com.yjq.programmer.pojo.common.OrderTime" id="allOrderTimeMap">
+        <id column="ot_id" property="id" />
+        <result column="ot_order_time" property="orderTime" />
+        <result column="ot_user_id" property="userId" />
+        <result column="ot_agent_reply" property="agentReply" />
+        <result column="ot_state" property="state" />
+        <result column="ot_house_id" property="houseId" />
+        <result column="ot_create_time" property="createTime" />
+        <!-- association中property使对应实体里封装的类型，javaType:指实体类型 --> <!-- 一对一关系 -->
+        <association property="user" javaType="com.yjq.programmer.pojo.common.User">
+            <id column="u_id" property="id" />
+            <result column="u_username" property="username" />
+        </association>
+        <association property="house" javaType="com.yjq.programmer.pojo.common.House">
+            <id column="h_id" property="id" />
+            <result column="h_house_type" property="houseType" />
+            <result column="h_info" property="info" />
+            <result column="h_location" property="location" />
+            <result column="h_area" property="area" />
+            <result column="h_orientation" property="orientation" />
+            <result column="h_money" property="money" />
+            <result column="h_cover_photo" property="coverPhoto" />
+            <result column="h_category" property="category" />
+            <result column="h_user_id" property="userId" />
+        </association>
+    </resultMap>
+
+    <!-- 前台获取用户预约房源信息列表 -->
+    <select id="getOrderTimeList" parameterType="java.util.Map" resultMap="allOrderTimeMap">
+        select ot.id as ot_id, ot.order_time as ot_order_time, ot.user_id as ot_user_id, ot.agent_reply as ot_agent_reply,
+        ot.state as ot_state, ot.house_id as ot_house_id, ot.create_time as ot_create_time, u.id as u_id, u.username as u_username,
+        h.id as h_id, h.info as h_info, h.location as h_location, h.house_type as h_house_type, h.area as h_area, h.cover_photo as h_cover_photo,
+        h.category as h_category, h.orientation as h_orientation, h.money as h_money, h.user_id as h_user_id from order_time ot left join user u
+        on ot.user_id = u.id left join house h on ot.house_id = h.id
+        <where>
+            <if test="userId != null">
+                and ot.user_id = #{userId}
+            </if>
+            <if test="state != null and state != -1">
+                and ot.state = #{state}
+            </if>
+            <if test="houseUserId != null">
+                and h.user_id = #{houseUserId}
+            </if>
+        </where>
+        order by ot.order_time
+        <if test="offset != null and pageSize != null">
+            limit #{offset},#{pageSize}
+        </if>
+    </select>
+
+    <!-- 前台获取用户预约房源信息的总数 -->
+    <select id="getAllTotal" parameterType="java.util.Map" resultType="Integer">
+        select count(*) from order_time ot left join user u on ot.user_id = u.id left
+        join house h on ot.house_id = h.id
+        <where>
+            <if test="userId != null">
+                and ot.user_id = #{userId}
+            </if>
+            <if test="state != null and state != -1">
+                and ot.state = #{state}
+            </if>
+            <if test="houseUserId != null">
+                and h.user_id = #{houseUserId}
+            </if>
+        </where>
+        order by ot.order_time
+    </select>
+
+    <!-- 通过房屋id列表删除预约信息数据 -->
+    <delete id="deleteByHouseIdList" parameterType="java.util.List">
+        delete from order_time where house_id in (
+        <foreach collection="houseIdList" index="index" item="item" separator=",">
+            #{item}
+        </foreach>
+        )
+    </delete>
+
+    <!-- 通过用户id列表删除预约信息数据 -->
+    <delete id="deleteByUserIdList" parameterType="java.util.List">
+        delete from order_time where user_id in (
+        <foreach collection="userIdList" index="index" item="item" separator=",">
+            #{item}
+        </foreach>
+        )
+    </delete>
+</mapper>
